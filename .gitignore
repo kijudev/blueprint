@@ -1,0 +1,7 @@
+/build
+/data
+
+.env
+.env.production
+.env.local
+.env.development
