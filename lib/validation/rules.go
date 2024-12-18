@@ -53,7 +53,6 @@ func Email(s string) *UnitError {
 	parts := strings.Split(s, "@")
 
 	if len(parts) != 2 {
-
 		return &UnitError{
 			Code: CodeEmail,
 		}
@@ -79,7 +78,8 @@ func Email(s string) *UnitError {
 		return &UnitError{
 			Code: CodeEmail,
 		}
-	}
+	} else {
 
-	return nil
+		return nil
+	}
 }
