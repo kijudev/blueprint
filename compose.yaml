@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: blueprint
+      POSTGRES_USER: blueprint
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
