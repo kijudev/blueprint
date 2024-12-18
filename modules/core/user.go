@@ -45,10 +45,23 @@ func (user *User) AsData() UserData {
 }
 
 func (user *User) Validate() error {
-	return validation.Combine(
-		validation.ValidateField("email", validation.Email(user.Email)),
-		validation.ValidateField("name", validation.MinLength(user.Name, 8)),
-	)
+	email := validation.NewField("email")
+	email.AddRule(validation.Email(user.Email))
+
+	name := validation.NewField("name")
+	name.AddRule(validation.MinLength(user.Name, 8))
+
+	object := validation.NewObject()
+	object.AddField(email)
+	object.AddField(name)
+
+	valid := object.Resolve()
+
+	if valid {
+		return nil
+	}
+
+	return object
 }
 
 func (userData *UserData) AsModel() User {

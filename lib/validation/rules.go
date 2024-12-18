@@ -5,11 +5,9 @@ import (
 	"strings"
 )
 
-type Rule func(s string, args ...any) *UnitError
-
-func Empty(s string) *UnitError {
+func NotEmpty(s string) *RuleResult {
 	if s == "" {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmpty,
 		}
 	}
@@ -17,9 +15,9 @@ func Empty(s string) *UnitError {
 	return nil
 }
 
-func MaxLength(s string, length int) *UnitError {
+func MaxLength(s string, length int) *RuleResult {
 	if len(s) > length {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeTooLong,
 		}
 	}
@@ -27,9 +25,9 @@ func MaxLength(s string, length int) *UnitError {
 	return nil
 }
 
-func MinLength(s string, length int) *UnitError {
+func MinLength(s string, length int) *RuleResult {
 	if len(s) < length {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeTooShort,
 		}
 	}
@@ -37,15 +35,15 @@ func MinLength(s string, length int) *UnitError {
 	return nil
 }
 
-func Email(s string) *UnitError {
+func Email(s string) *RuleResult {
 	if s == "" {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	}
 
 	if len(s) > 254 {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	}
@@ -53,7 +51,7 @@ func Email(s string) *UnitError {
 	parts := strings.Split(s, "@")
 
 	if len(parts) != 2 {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	}
@@ -61,13 +59,13 @@ func Email(s string) *UnitError {
 	localPart, domain := parts[0], parts[1]
 
 	if len(localPart) > 64 {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	}
 
 	if len(domain) > 253 {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	}
@@ -75,7 +73,7 @@ func Email(s string) *UnitError {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 	if !emailRegex.MatchString(s) {
-		return &UnitError{
+		return &RuleResult{
 			Code: CodeEmail,
 		}
 	} else {

@@ -3,15 +3,20 @@ package main
 import (
 	"fmt"
 
-	"github.com/kijudev/blueprint/lib/validation"
 	"github.com/kijudev/blueprint/modules/core"
 )
 
 func main() {
 	user := core.User{
-		Email: "test@gmail.com",
-		Name:  "Kiju",
+		Email: "kiju@kiju.page",
+		Name:  "kijukiju",
 	}
 
-	fmt.Println(user, validation.Combine(validation.ValidateField("email", validation.Email("kiju@gmail.com"))))
+	err := user.Validate()
+
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println(user)
+	}
 }
