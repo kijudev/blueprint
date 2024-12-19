@@ -1,83 +1,73 @@
 package validation
 
 import (
-	"regexp"
+	"strconv"
 	"strings"
 )
 
-func NotEmpty(s string) *RuleResult {
-	if s == "" {
-		return &RuleResult{
-			Code: CodeEmpty,
-		}
+func RuleNotEmpty(data string) (bool, *RuleError) {
+	if data == "" {
+		return false, &RuleError{Code: CodeEmpty}
 	}
-
-	return nil
+	return true, nil
 }
 
-func MaxLength(s string, length int) *RuleResult {
-	if len(s) > length {
-		return &RuleResult{
-			Code: CodeTooLong,
-		}
+func RuleMinLength(data string, min int) (bool, *RuleError) {
+	if len(data) < min {
+		return false, &RuleError{Code: CodeTooShort, Data: strconv.Itoa(min)}
 	}
-
-	return nil
+	return true, nil
 }
 
-func MinLength(s string, length int) *RuleResult {
-	if len(s) < length {
-		return &RuleResult{
-			Code: CodeTooShort,
-		}
+func RuleMaxLength(data string, max int) (bool, *RuleError) {
+	if len(data) > max {
+		return false, &RuleError{Code: CodeTooLong, Data: strconv.Itoa(max)}
 	}
-
-	return nil
+	return true, nil
 }
 
-func Email(s string) *RuleResult {
-	if s == "" {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
+func RuleMinValueInt(data int, min int) (bool, *RuleError) {
+	if data < min {
+		return false, &RuleError{Code: CodeTooSmall, Data: strconv.Itoa(min)}
+	}
+	return true, nil
+}
+
+func RuleMaxValueInt(data int, max int) (bool, *RuleError) {
+	if data > max {
+		return false, &RuleError{Code: CodeTooBig, Data: strconv.Itoa(max)}
+	}
+	return true, nil
+}
+
+func RuleMinValueFloat(data float64, min float64) (bool, *RuleError) {
+	if data < min {
+		return false, &RuleError{Code: CodeTooSmall, Data: strconv.FormatFloat(min, 'f', -1, 64)}
+	}
+	return true, nil
+}
+
+func RuleMaxValueFloat(data float64, max float64) (bool, *RuleError) {
+	if data > max {
+		return false, &RuleError{Code: CodeTooBig, Data: strconv.FormatFloat(max, 'f', -1, 64)}
+	}
+	return true, nil
+}
+
+func RuleEmail(data string) (bool, *RuleError) {
+	if data == "" {
+		return false, &RuleError{Code: CodeEmail}
+	}
+	if len(data) < 3 {
+		return false, &RuleError{Code: CodeEmail, Data: "3"}
+	}
+	if len(data) > 254 {
+		return false, &RuleError{Code: CodeEmail, Data: "254"}
 	}
 
-	if len(s) > 254 {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
+	if !strings.Contains(data, "@") {
+		return false, &RuleError{Code: CodeEmail, Data: "@"}
 	}
 
-	parts := strings.Split(s, "@")
-
-	if len(parts) != 2 {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
-	}
-
-	localPart, domain := parts[0], parts[1]
-
-	if len(localPart) > 64 {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
-	}
-
-	if len(domain) > 253 {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
-	}
-
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-
-	if !emailRegex.MatchString(s) {
-		return &RuleResult{
-			Code: CodeEmail,
-		}
-	} else {
-
-		return nil
-	}
+	return true, nil
 }

@@ -2,8 +2,6 @@ package core
 
 import (
 	"time"
-
-	"github.com/kijudev/blueprint/lib/validation"
 )
 
 type User struct {
@@ -42,26 +40,6 @@ func (user *User) AsData() UserData {
 		CreatedAt:   user.CreatedAt.Unix(),
 		UpdatedAt:   user.UpdatedAt.Unix(),
 	}
-}
-
-func (user *User) Validate() error {
-	email := validation.NewField("email")
-	email.AddRule(validation.Email(user.Email))
-
-	name := validation.NewField("name")
-	name.AddRule(validation.MinLength(user.Name, 8))
-
-	object := validation.NewObject()
-	object.AddField(email)
-	object.AddField(name)
-
-	valid := object.Resolve()
-
-	if valid {
-		return nil
-	}
-
-	return object
 }
 
 func (userData *UserData) AsModel() User {
