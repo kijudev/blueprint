@@ -2,13 +2,13 @@ package validation
 
 type FloatValidator struct {
 	data float64
-	err  ValidatorError
+	err  ValidationError
 }
 
 func Float(data float64) *FloatValidator {
 	return &FloatValidator{
 		data: data,
-		err:  ValidatorError{},
+		err:  ValidationError{},
 	}
 }
 
@@ -18,6 +18,10 @@ func (v *FloatValidator) Validate() error {
 	}
 
 	return nil
+}
+
+func (v *FloatValidator) getError() ValidationError {
+	return v.err
 }
 
 func (v *FloatValidator) MinValue(min float64) *FloatValidator {

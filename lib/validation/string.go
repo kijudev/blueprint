@@ -2,13 +2,13 @@ package validation
 
 type StringValidator struct {
 	data string
-	err  ValidatorError
+	err  ValidationError
 }
 
 func String(data string) *StringValidator {
 	return &StringValidator{
 		data: data,
-		err:  ValidatorError{},
+		err:  ValidationError{},
 	}
 }
 
@@ -18,6 +18,10 @@ func (v *StringValidator) Validate() error {
 	}
 
 	return nil
+}
+
+func (v *StringValidator) getError() ValidationError {
+	return v.err
 }
 
 func (v *StringValidator) NotEmpty() *StringValidator {

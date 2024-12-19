@@ -2,13 +2,13 @@ package validation
 
 type IntValidator struct {
 	data int
-	err  ValidatorError
+	err  ValidationError
 }
 
 func Int(data int) *IntValidator {
 	return &IntValidator{
 		data: data,
-		err:  ValidatorError{},
+		err:  ValidationError{},
 	}
 }
 
@@ -18,6 +18,10 @@ func (v *IntValidator) Validate() error {
 	}
 
 	return nil
+}
+
+func (v *IntValidator) getError() ValidationError {
+	return v.err
 }
 
 func (v *IntValidator) MinValue(min int) *IntValidator {

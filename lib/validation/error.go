@@ -8,7 +8,9 @@ type RuleError struct {
 	Msg  string `json:"msg"`
 }
 
-type ValidatorError []RuleError
+type ValidationError []RuleError
+
+type Error map[string]ValidationError
 
 var (
 	CodeEmpty    = "EMPTY"
@@ -19,12 +21,17 @@ var (
 	CodeEmail    = "EMAIL"
 )
 
-func (r *RuleError) Error() string {
+func (r RuleError) Error() string {
 	bytes, _ := json.Marshal(r)
 	return string(bytes)
 }
 
-func (v *ValidatorError) Error() string {
+func (v ValidationError) Error() string {
 	bytes, _ := json.Marshal(v)
+	return string(bytes)
+}
+
+func (c Error) Error() string {
+	bytes, _ := json.Marshal(c)
 	return string(bytes)
 }
