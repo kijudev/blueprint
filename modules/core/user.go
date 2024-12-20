@@ -7,6 +7,7 @@ import (
 )
 
 type User struct {
+	ID          string
 	Email       string
 	Name        string
 	Permissions Permissions
@@ -15,6 +16,7 @@ type User struct {
 }
 
 type UserData struct {
+	ID          string `json:"id"`
 	Email       string `json:"email"`
 	Name        string `json:"name"`
 	Permissions string `json:"permissions"`
@@ -34,8 +36,15 @@ type UserParamsData struct {
 	Permissions string `json:"permissions"`
 }
 
+type UserDBFilter struct {
+	ID    *string
+	Email *string
+	Name  *string
+}
+
 func (u *User) AsData() UserData {
 	return UserData{
+		ID:          u.ID,
 		Email:       u.Email,
 		Name:        u.Name,
 		Permissions: u.Permissions.AsString(),
@@ -55,6 +64,7 @@ func (u *User) Validate() error {
 
 func (u *UserData) AsModel() User {
 	return User{
+		ID:          u.ID,
 		Email:       u.Email,
 		Name:        u.Name,
 		Permissions: *NewPermissionsFromString(u.Permissions),
