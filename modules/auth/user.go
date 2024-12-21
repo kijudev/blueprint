@@ -1,4 +1,4 @@
-package core
+package auth
 
 import (
 	"time"
@@ -36,7 +36,7 @@ type UserParamsData struct {
 	Permissions string `json:"permissions"`
 }
 
-type UserDBFilter struct {
+type UserFilter struct {
 	ID    *string
 	Email *string
 	Name  *string
@@ -51,15 +51,6 @@ func (u *User) AsData() UserData {
 		CreatedAt:   u.CreatedAt.Unix(),
 		UpdatedAt:   u.UpdatedAt.Unix(),
 	}
-}
-
-func (u *User) Validate() error {
-	c := validation.NewCollection()
-
-	c.Add("email", validation.String(u.Email).Email())
-	c.Add("name", validation.String(u.Name).MinLength(4))
-
-	return c.Resolve()
 }
 
 func (u *UserData) AsModel() User {
