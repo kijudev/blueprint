@@ -1,4 +1,4 @@
-package auth
+package authpg
 
 import (
 	"github.com/kijudev/blueprint/lib/databases"

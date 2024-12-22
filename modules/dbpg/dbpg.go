@@ -14,7 +14,13 @@ type Module struct {
 
 	connStr string
 
-	DBService *DBService
+	deps     ModuleDeps
+	services ModulesServices
+}
+
+type ModuleDeps struct{}
+type ModulesServices struct {
+	DB *DBService
 }
 
 type DBService struct {
@@ -28,8 +34,10 @@ func New(connStr string) *Module {
 		tag:    Tag,
 		status: modules.StatusCodePreInit,
 
-		connStr:   connStr,
-		DBService: new(DBService),
+		connStr: connStr,
+
+		deps:     ModuleDeps{},
+		services: ModulesServices{},
 	}
 }
 
@@ -42,7 +50,7 @@ func (m *Module) Status() string {
 }
 
 func (m *Module) Init(ctx context.Context) error {
-	if m.status != modules.StatusCodePreInit {
+	if m.status == modules.StatusCodeActive {
 		return fmt.Errorf("(pgdb.Module.Init) %w", modules.ErrorInvalidStatus)
 	}
 
@@ -51,7 +59,9 @@ func (m *Module) Init(ctx context.Context) error {
 		return fmt.Errorf("(dbpg.Module.Init) %w; %w", modules.ErrorInitFailed, err)
 	}
 
-	m.DBService.Pool = pool
+	m.services.DB.Pool = pool
+	m.status = modules.StatusCodeActive
+
 	return nil
 }
 
@@ -66,7 +76,9 @@ func (m *Module) Stop(ctx context.Context) error {
 		return fmt.Errorf("(dbpg.Module.Stop) %w", modules.ErrorInvalidStatus)
 	}
 
-	m.DBService.Close()
+	m.services.DB.Close()
+	m.status = modules.StatusCodeStopped
+
 	return nil
 }
 
@@ -74,4 +86,12 @@ func (m *Module) MustStop(ctx context.Context) {
 	if err := m.Stop(ctx); err != nil {
 		panic(err)
 	}
+}
+
+func (m *Module) DBService() *DBService {
+	if m.status != modules.StatusCodeActive || m.services.DB == nil {
+		panic(modules.ErrorInvalidStatus)
+	}
+
+	return m.services.DB
 }

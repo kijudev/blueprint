@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	"github.com/kijudev/blueprint/lib/modules"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -14,7 +15,5 @@ type Service interface {
 }
 
 type Module interface {
-	GetService() *Service
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
+	modules.Module
 }
