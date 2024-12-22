@@ -11,13 +11,6 @@ type Service interface {
 
 type Module interface {
 	GetService() *Service
-	GetStatus() string
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 }
-
-var (
-	StatusPreInit = "PRE_INIT"
-	StatusActive  = "ACTIVE"
-	StatusStopped = "STOPPED"
-)

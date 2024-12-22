@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"errors"
+	"context"
 
 	"github.com/kijudev/blueprint/modules/dbpg"
 )
 
 type ServicePg struct {
-	dbpgModue *dbpg.Module
+	dbpgModule *dbpg.Module
 }
 
 type ModulePg struct {
@@ -16,23 +16,31 @@ type ModulePg struct {
 	status     string
 }
 
+func NewServicePg(dbpgModule *dbpg.Module) *ServicePg {
+	return &ServicePg{
+		dbpgModule: dbpgModule,
+	}
+}
+
 func NewModulePg(dbpgModule *dbpg.Module) *ModulePg {
 	return &ModulePg{
 		dbpgModule: dbpgModule,
-		status:     StatusPreInit,
+		service:    NewServicePg(dbpgModule),
 	}
 }
 
-func (m *ModulePg) Init() error {
-	if m.dbpgModule.GetStatus() != dbpg.StatusRunning {
-		return errors.New("The database module must be running")
+func (m *ModulePg) Init(ctx context.Context) error {
+	for _, migration := range userMigrations {
+		_, err := m.dbpgModule.GetPool().Exec(ctx, migration.Up)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	m.status = StatusActive
 	return nil
 }
 
-func (m *ModulePg) Stop() error {
-	m.status = StatusStopped
+func (m *ModulePg) Stop(ctx context.Context) error {
 	return nil
 }

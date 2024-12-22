@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/kijudev/blueprint/lib/validation"
+	"github.com/oklog/ulid/v2"
 )
 
 type User struct {
-	ID          string
+	ID          ulid.ULID
 	Email       string
 	Name        string
 	Permissions Permissions
@@ -42,25 +43,25 @@ type UserFilter struct {
 	Name  *string
 }
 
+func NewUserFromParams(params UserParams) *User {
+	return &User{
+		ID:          ulid.Make(),
+		Email:       params.Email,
+		Name:        params.Name,
+		Permissions: params.Permissions,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+}
+
 func (u *User) AsData() UserData {
 	return UserData{
-		ID:          u.ID,
+		ID:          u.ID.String(),
 		Email:       u.Email,
 		Name:        u.Name,
 		Permissions: u.Permissions.AsString(),
 		CreatedAt:   u.CreatedAt.Unix(),
 		UpdatedAt:   u.UpdatedAt.Unix(),
-	}
-}
-
-func (u *UserData) AsModel() User {
-	return User{
-		ID:          u.ID,
-		Email:       u.Email,
-		Name:        u.Name,
-		Permissions: *NewPermissionsFromString(u.Permissions),
-		CreatedAt:   time.Unix(u.CreatedAt, 0).UTC(),
-		UpdatedAt:   time.Unix(u.UpdatedAt, 0).UTC(),
 	}
 }
 
@@ -76,7 +77,7 @@ func (u *UserParams) Validate() error {
 	c := validation.NewCollection()
 
 	c.Add("email", validation.String(u.Email).Email())
-	c.Add("name", validation.String(u.Name).MinLength(4))
+	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
 
 	return c.Resolve()
 }
