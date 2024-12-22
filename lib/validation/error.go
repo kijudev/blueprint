@@ -13,12 +13,12 @@ type ValidationError []RuleError
 type Error map[string]ValidationError
 
 var (
-	CodeEmpty    = "EMPTY"
-	CodeTooShort = "TOO_SHORT"
-	CodeTooLong  = "TOO_LONG"
-	CodeTooBig   = "TOO_BIG"
-	CodeTooSmall = "TOO_SMALL"
-	CodeEmail    = "EMAIL"
+	ErrorCodeEmpty    = "EMPTY"
+	ErrorCodeTooShort = "TOO_SHORT"
+	ErrorCodeTooLong  = "TOO_LONG"
+	ErrorCodeTooBig   = "TOO_BIG"
+	ErrorCodeTooSmall = "TOO_SMALL"
+	ErrorCodeEmail    = "EMAIL"
 )
 
 func (r RuleError) Error() string {

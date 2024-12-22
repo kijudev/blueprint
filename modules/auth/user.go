@@ -3,7 +3,6 @@ package auth
 import (
 	"time"
 
-	"github.com/kijudev/blueprint/lib/validation"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -38,20 +37,9 @@ type UserParamsData struct {
 }
 
 type UserFilter struct {
-	ID    *string
+	ID    *ulid.ULID
 	Email *string
 	Name  *string
-}
-
-func NewUserFromParams(params UserParams) *User {
-	return &User{
-		ID:          ulid.Make(),
-		Email:       params.Email,
-		Name:        params.Name,
-		Permissions: params.Permissions,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
 }
 
 func (u *User) AsData() UserData {
@@ -63,23 +51,6 @@ func (u *User) AsData() UserData {
 		CreatedAt:   u.CreatedAt.Unix(),
 		UpdatedAt:   u.UpdatedAt.Unix(),
 	}
-}
-
-func (u *UserParams) AsData() UserParamsData {
-	return UserParamsData{
-		Email:       u.Email,
-		Name:        u.Name,
-		Permissions: u.Permissions.AsString(),
-	}
-}
-
-func (u *UserParams) Validate() error {
-	c := validation.NewCollection()
-
-	c.Add("email", validation.String(u.Email).Email())
-	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
-
-	return c.Resolve()
 }
 
 func (u *UserParamsData) AsModel() UserParams {
