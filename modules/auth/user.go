@@ -34,7 +34,7 @@ type UserParams struct {
 type UserParamsData struct {
 	Email       string `json:"email"`
 	Name        string `json:"name"`
-	Permissions string `json:"permissions"`
+	Permissions string `json:"permiassions"`
 }
 
 type UserFilter struct {
@@ -43,8 +43,21 @@ type UserFilter struct {
 	Name  *string
 }
 
-func (u *User) AsData() UserData {
-	return UserData{
+func NewUser(params UserParams) *User {
+	now := time.Now()
+
+	return &User{
+		ID:          ulid.Make(),
+		Email:       params.Email,
+		Name:        params.Name,
+		Permissions: params.Permissions,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+}
+
+func (u *User) AsData() *UserData {
+	return &UserData{
 		ID:          u.ID.String(),
 		Email:       u.Email,
 		Name:        u.Name,
@@ -64,8 +77,8 @@ func (u *User) Validate() error {
 	return c.Resolve()
 }
 
-func (u *UserParamsData) AsModel() UserParams {
-	return UserParams{
+func (u *UserParamsData) AsModel() *UserParams {
+	return &UserParams{
 		Email:       u.Email,
 		Name:        u.Name,
 		Permissions: *NewPermissions(u.Permissions),

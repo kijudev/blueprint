@@ -33,7 +33,7 @@ func NewModule(deps ModuleDeps) *Module {
 		deps:   deps,
 
 		services: ModuleSerivces{
-			Core: new(CoreService),
+			Core: NewCoreService(deps.DB),
 		},
 	}
 }
@@ -51,14 +51,11 @@ func (m *Module) Init(ctx context.Context) error {
 		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrorInvalidStatus)
 	}
 
-	m.services.Core.db = m.deps.DB
+	if m.deps.DB == nil {
+		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrorMissingDependency)
+	}
 
-	// Dummy implementation
-	// for _, migration := range migrations {
-	// 	if _, err := m.deps.DB.Exec(ctx, migration.Up); err != nil {
-	// 		return fmt.Errorf("(authpg.Module.Init) %w; %w", modules.ErrorInitFailed, err)
-	// 	}
-	// }
+	m.services.Core.db = m.deps.DB
 
 	m.status = modules.StatusCodeActive
 
