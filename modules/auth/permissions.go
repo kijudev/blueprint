@@ -6,11 +6,7 @@ type Permissions struct {
 	list []string
 }
 
-func NewPermissions() *Permissions {
-	return new(Permissions)
-}
-
-func NewPermissionsFromString(list string) *Permissions {
+func NewPermissions(list string) *Permissions {
 	permissions := new(Permissions)
 
 	for _, rule := range strings.Split(list, " ") {

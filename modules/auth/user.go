@@ -3,6 +3,7 @@ package auth
 import (
 	"time"
 
+	"github.com/kijudev/blueprint/lib/validation"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -53,10 +54,20 @@ func (u *User) AsData() UserData {
 	}
 }
 
+func (u *User) Validate() error {
+	c := validation.NewCollection()
+
+	c.Add("email", validation.String(u.Email).Email())
+	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
+	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
+
+	return c.Resolve()
+}
+
 func (u *UserParamsData) AsModel() UserParams {
 	return UserParams{
 		Email:       u.Email,
 		Name:        u.Name,
-		Permissions: *NewPermissionsFromString(u.Permissions),
+		Permissions: *NewPermissions(u.Permissions),
 	}
 }

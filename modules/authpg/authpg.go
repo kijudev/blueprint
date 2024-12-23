@@ -24,10 +24,6 @@ type ModuleSerivces struct {
 	Core *CoreService
 }
 
-type CoreService struct {
-	db *dbpg.DBService
-}
-
 const TAG = "AUTHPG"
 
 func NewModule(deps ModuleDeps) *Module {
@@ -58,11 +54,11 @@ func (m *Module) Init(ctx context.Context) error {
 	m.services.Core.db = m.deps.DB
 
 	// Dummy implementation
-	for _, migration := range userMigrations {
-		if _, err := m.deps.DB.Exec(ctx, migration.Up); err != nil {
-			return fmt.Errorf("(authpg.Module.Init) %w; %w", modules.ErrorInitFailed, err)
-		}
-	}
+	// for _, migration := range migrations {
+	// 	if _, err := m.deps.DB.Exec(ctx, migration.Up); err != nil {
+	// 		return fmt.Errorf("(authpg.Module.Init) %w; %w", modules.ErrorInitFailed, err)
+	// 	}
+	// }
 
 	m.status = modules.StatusCodeActive
 
