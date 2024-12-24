@@ -36,8 +36,10 @@ func New(connStr string) *Module {
 
 		connStr: connStr,
 
-		deps:     ModuleDeps{},
-		services: ModulesServices{},
+		deps: ModuleDeps{},
+		services: ModulesServices{
+			DB: &DBService{},
+		},
 	}
 }
 
@@ -89,8 +91,8 @@ func (m *Module) MustStop(ctx context.Context) {
 }
 
 func (m *Module) DBService() *DBService {
-	if m.status != modules.StatusCodeActive || m.services.DB == nil {
-		panic(modules.ErrorInvalidStatus)
+	if m.status != modules.StatusCodeActive {
+		panic(fmt.Errorf("(dbpg.Module.DBService) %w", modules.ErrorInvalidStatus))
 	}
 
 	return m.services.DB

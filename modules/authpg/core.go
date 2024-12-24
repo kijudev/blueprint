@@ -66,7 +66,7 @@ func (s *CoreService) GetUserByID(ctx context.Context, id ulid.ULID) (*auth.User
 		return nil, fmt.Errorf("(authpg.CoreService.GetUserByID) %w; %w", err, services.ErrorDependencyFailed)
 	}
 
-	user := pguser.AsModel()
+	user := pguser.Model()
 	return user, nil
 }
 

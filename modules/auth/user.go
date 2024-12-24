@@ -3,12 +3,13 @@ package auth
 import (
 	"time"
 
+	"github.com/kijudev/blueprint/lib/models"
 	"github.com/kijudev/blueprint/lib/validation"
 	"github.com/oklog/ulid/v2"
 )
 
 type User struct {
-	ID          ulid.ULID
+	ID          models.ID
 	Email       string
 	Name        string
 	Permissions Permissions
@@ -47,7 +48,7 @@ func NewUser(params UserParams) *User {
 	now := time.Now()
 
 	return &User{
-		ID:          ulid.Make(),
+		ID:          models.GenerateID(),
 		Email:       params.Email,
 		Name:        params.Name,
 		Permissions: params.Permissions,
@@ -56,7 +57,7 @@ func NewUser(params UserParams) *User {
 	}
 }
 
-func (u *User) AsData() *UserData {
+func (u *User) Data() *UserData {
 	return &UserData{
 		ID:          u.ID.String(),
 		Email:       u.Email,
@@ -77,7 +78,7 @@ func (u *User) Validate() error {
 	return c.Resolve()
 }
 
-func (u *UserParamsData) AsModel() *UserParams {
+func (u *UserParamsData) Model() *UserParams {
 	return &UserParams{
 		Email:       u.Email,
 		Name:        u.Name,

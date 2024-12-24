@@ -2,8 +2,8 @@ package authpg
 
 import (
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/kijudev/blueprint/lib/models"
 	"github.com/kijudev/blueprint/modules/auth"
-	"github.com/oklog/ulid/v2"
 )
 
 type UserPG struct {
@@ -18,7 +18,7 @@ type UserPG struct {
 func NewUserPG(u auth.User) *UserPG {
 	t := new(UserPG)
 
-	t.ID.Scan(u.ID.String())
+	t.ID.Scan(u.ID.UUIDString())
 	t.Email.Scan(u.Email)
 	t.Name.Scan(u.Name)
 	t.Permissions.Scan(u.Permissions.AsString())
@@ -28,9 +28,9 @@ func NewUserPG(u auth.User) *UserPG {
 	return t
 }
 
-func (u *UserPG) AsModel() *auth.User {
+func (u *UserPG) Model() *auth.User {
 	return &auth.User{
-		ID:          ulid.MustParse(u.ID.String()),
+		ID:          models.MustNew(u.ID.String()),
 		Email:       u.Email.String,
 		Name:        u.Name.String,
 		Permissions: *auth.NewPermissions(u.Permissions.String),

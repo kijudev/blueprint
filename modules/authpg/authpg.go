@@ -26,7 +26,7 @@ type ModuleSerivces struct {
 
 const TAG = "AUTHPG"
 
-func NewModule(deps ModuleDeps) *Module {
+func New(deps ModuleDeps) *Module {
 	return &Module{
 		tag:    TAG,
 		status: modules.StatusCodePreInit,
@@ -82,4 +82,12 @@ func (m *Module) MustStop(ctx context.Context) {
 	if err := m.Stop(ctx); err != nil {
 		panic(err)
 	}
+}
+
+func (m *Module) CoreService() *CoreService {
+	if m.status != modules.StatusCodeActive {
+		panic(fmt.Errorf("(authpg.Module.CoreService) %w", modules.ErrorInvalidStatus))
+	}
+
+	return m.services.Core
 }
