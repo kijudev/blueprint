@@ -53,12 +53,12 @@ func (m *Module) Status() string {
 
 func (m *Module) Init(ctx context.Context) error {
 	if m.status == modules.StatusCodeActive {
-		return fmt.Errorf("(pgdb.Module.Init) %w", modules.ErrorInvalidStatus)
+		return fmt.Errorf("(pgdb.Module.Init) %w", modules.ErrInvalidStatus)
 	}
 
 	pool, err := pgxpool.New(ctx, m.connStr)
 	if err != nil {
-		return fmt.Errorf("(dbpg.Module.Init) %w; %w", modules.ErrorInitFailed, err)
+		return fmt.Errorf("(dbpg.Module.Init) %w; %w", modules.ErrInitFailed, err)
 	}
 
 	m.services.DB.Pool = pool
@@ -75,7 +75,7 @@ func (m *Module) MustInit(ctx context.Context) {
 
 func (m *Module) Stop(ctx context.Context) error {
 	if m.status != modules.StatusCodeActive {
-		return fmt.Errorf("(dbpg.Module.Stop) %w", modules.ErrorInvalidStatus)
+		return fmt.Errorf("(dbpg.Module.Stop) %w", modules.ErrInvalidStatus)
 	}
 
 	m.services.DB.Close()
@@ -92,7 +92,7 @@ func (m *Module) MustStop(ctx context.Context) {
 
 func (m *Module) DBService() *DBService {
 	if m.status != modules.StatusCodeActive {
-		panic(fmt.Errorf("(dbpg.Module.DBService) %w", modules.ErrorInvalidStatus))
+		panic(fmt.Errorf("(dbpg.Module.DBService) %w", modules.ErrInvalidStatus))
 	}
 
 	return m.services.DB

@@ -18,7 +18,7 @@ type UserPG struct {
 func NewUserPG(u auth.User) *UserPG {
 	t := new(UserPG)
 
-	t.ID.Scan(u.ID.UUIDString())
+	t.ID.Scan(u.ID.UUID())
 	t.Email.Scan(u.Email)
 	t.Name.Scan(u.Name)
 	t.Permissions.Scan(u.Permissions.AsString())

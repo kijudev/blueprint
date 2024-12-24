@@ -3,17 +3,17 @@ package modules
 import "errors"
 
 const (
-	ErrorCodeInitFailed        = "INIT_FAILED"
-	ErrorCodeStopFailed        = "STOP_FAILED"
-	ErrorCodeInvalidStatus     = "INVALID_STATUS"
-	ErrorCodeUnknown           = "UNKNOWN"
-	ErrorCodeMissingDependency = "MISSING_DEPS"
+	ErrCodeInitFailed        = "INIT_FAILED"
+	ErrCodeStopFailed        = "STOP_FAILED"
+	ErrCodeInvalidStatus     = "INVALID_STATUS"
+	ErrCodeUnknown           = "UNKNOWN"
+	ErrCodeMissingDependency = "MISSING_DEPENDENCY"
 )
 
 var (
-	ErrorInitFailed        = errors.New(ErrorCodeInitFailed)
-	ErrorStopFailed        = errors.New(ErrorCodeStopFailed)
-	ErrorInvalidStatus     = errors.New(ErrorCodeInvalidStatus)
-	ErrorUnknown           = errors.New(ErrorCodeUnknown)
-	ErrorMissingDependency = errors.New(ErrorCodeMissingDependency)
+	ErrInitFailed        = errors.New(ErrCodeInitFailed)
+	ErrStopFailed        = errors.New(ErrCodeStopFailed)
+	ErrInvalidStatus     = errors.New(ErrCodeInvalidStatus)
+	ErrUnknown           = errors.New(ErrCodeUnknown)
+	ErrMissingDependency = errors.New(ErrCodeMissingDependency)
 )

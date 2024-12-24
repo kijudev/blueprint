@@ -5,7 +5,6 @@ import (
 
 	"github.com/kijudev/blueprint/lib/models"
 	"github.com/kijudev/blueprint/lib/validation"
-	"github.com/oklog/ulid/v2"
 )
 
 type User struct {
@@ -39,7 +38,7 @@ type UserParamsData struct {
 }
 
 type UserFilter struct {
-	ID    *ulid.ULID
+	ID    *models.ID
 	Email *string
 	Name  *string
 }

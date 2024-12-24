@@ -24,11 +24,11 @@ type ModuleSerivces struct {
 	Core *CoreService
 }
 
-const TAG = "AUTHPG"
+const Tag = "AUTHPG"
 
 func New(deps ModuleDeps) *Module {
 	return &Module{
-		tag:    TAG,
+		tag:    Tag,
 		status: modules.StatusCodePreInit,
 		deps:   deps,
 
@@ -48,11 +48,11 @@ func (m *Module) Status() string {
 
 func (m *Module) Init(ctx context.Context) error {
 	if m.status == modules.StatusCodeActive {
-		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrorInvalidStatus)
+		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrInvalidStatus)
 	}
 
 	if m.deps.DB == nil {
-		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrorMissingDependency)
+		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrMissingDependency)
 	}
 
 	m.services.Core.db = m.deps.DB
@@ -70,7 +70,7 @@ func (m *Module) MustInit(ctx context.Context) {
 
 func (m *Module) Stop(ctx context.Context) error {
 	if m.status != modules.StatusCodeActive {
-		return fmt.Errorf("(authpg.Module.Stop) %w", modules.ErrorInvalidStatus)
+		return fmt.Errorf("(authpg.Module.Stop) %w", modules.ErrInvalidStatus)
 	}
 
 	m.status = modules.StatusCodeStopped
@@ -86,7 +86,7 @@ func (m *Module) MustStop(ctx context.Context) {
 
 func (m *Module) CoreService() *CoreService {
 	if m.status != modules.StatusCodeActive {
-		panic(fmt.Errorf("(authpg.Module.CoreService) %w", modules.ErrorInvalidStatus))
+		panic(fmt.Errorf("(authpg.Module.CoreService) %w", modules.ErrInvalidStatus))
 	}
 
 	return m.services.Core

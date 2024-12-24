@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/kijudev/blueprint/lib/models"
 	"github.com/kijudev/blueprint/lib/services"
 	"github.com/kijudev/blueprint/modules/auth"
 	"github.com/kijudev/blueprint/modules/dbpg"
-	"github.com/oklog/ulid/v2"
 )
 
 type CoreService struct {
@@ -33,43 +34,66 @@ func (s *CoreService) CreateUser(ctx context.Context, params auth.UserParams) (*
 
 	tag, err := s.db.Pool.Exec(ctx, query, pguser.ID, pguser.Email, pguser.Name, pguser.Permissions, pguser.CreatedAt, pguser.UpdatedAt)
 	if err != nil {
-		return nil, fmt.Errorf("(authpg.CoreService.CreateUser) %w; %w", err, services.ErrorDependencyFailed)
+		return nil, fmt.Errorf("(authpg.CoreService.CreateUser) %w; %w", err, services.ErrDependencyFailed)
 	}
 
 	if !tag.Insert() {
-		return nil, fmt.Errorf("(authpg.CoreService.CreateUser) %w; Could not insert user", services.ErrorDependencyFailed)
+		return nil, fmt.Errorf("(authpg.CoreService.CreateUser) %w; Could not insert user", services.ErrDependencyFailed)
 	}
 
 	return user, nil
 }
 
-func (s *CoreService) GetUserByID(ctx context.Context, id ulid.ULID) (*auth.User, error) {
+func (s *CoreService) GetUserByID(ctx context.Context, id models.ID) (*auth.User, error) {
+	tx, err := s.db.Pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("(authpg.CoreService.GetUserByID) %w; %w", services.ErrDependencyFailed, err)
+	}
+	defer tx.Commit(ctx)
+
+	user, err := s.findUser(ctx, tx, auth.UserFilter{ID: &id})
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *CoreService) findUser(ctx context.Context, tx pgx.Tx, filter auth.UserFilter) (*auth.User, error) {
 	query := `
 		SELECT
 			id, email, name, permissions, created_at, updated_at
 		FROM
 			users
-		WHERE
-			id = $1;
 	`
 
-	row := s.db.Pool.QueryRow(ctx, query, id)
+	var args []any
 
-	pguser := new(UserPG)
-	err := row.Scan(&pguser.ID, &pguser.Email, &pguser.Name, &pguser.Permissions, &pguser.CreatedAt, &pguser.UpdatedAt)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("(authpg.CoreSerivce.GetUserByID) %w", services.ErrorNotFound)
-		}
-
-		return nil, fmt.Errorf("(authpg.CoreService.GetUserByID) %w; %w", err, services.ErrorDependencyFailed)
+	if filter.ID != nil {
+		query += " WHERE id = $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.ID.UUID())
+	}
+	if filter.Email != nil {
+		query += " WHERE email = $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Email)
+	}
+	if filter.Name != nil {
+		query += " WHERE name = $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Name)
 	}
 
-	user := pguser.Model()
-	return user, nil
-}
+	row := tx.QueryRow(ctx, query, args...)
 
-func (s *CoreService) findUser(ctx context.Context, tx pgx.Tx, filter auth.UserFilter) (*auth.User, error) {
-	return nil, errors.New("not implemented")
+	user := new(UserPG)
+
+	err := row.Scan(&user.ID, &user.Email, &user.Name, &user.Permissions, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("(authpg.CoreService.findUser) %w", services.ErrNotFound)
+		}
+
+		return nil, fmt.Errorf("(authpg.CoreService.findUser) %w; %w", services.ErrDependencyFailed, err)
+	}
+
+	return user.Model(), nil
 }

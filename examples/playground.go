@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kijudev/blueprint/modules/auth"
+	"github.com/kijudev/blueprint/lib/models"
 	"github.com/kijudev/blueprint/modules/authpg"
 	"github.com/kijudev/blueprint/modules/dbpg"
 )
@@ -22,10 +22,7 @@ func main() {
 	authModule.MustInit(ctx)
 	defer authModule.MustStop(ctx)
 
-	user, err := authModule.CoreService().CreateUser(ctx, auth.UserParams{
-		Email: "test@gmail.com",
-		Name:  "test-user",
-	})
+	user, err := authModule.CoreService().GetUserByID(ctx, models.MustNew("0193f7da-6cd3-fb6e-f33a-5f7b4f8f8103"))
 
 	if err != nil {
 		panic(err)

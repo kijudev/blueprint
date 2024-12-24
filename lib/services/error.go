@@ -3,17 +3,19 @@ package services
 import "errors"
 
 const (
-	ErrorCodeNotFound         = "NOT_FOUND"
-	ErrorCodeDependencyFailed = "DEPENDENCY_FAILED"
-	ErrorCodeInvalidParams    = "INVALID_PARAMS"
-	ErrorCodeValidationFailed = "VALIDATION_FAILED"
-	ErrorCodeUnknown          = "UNKNOWN"
+	ErrCodeNotFound         = "NOT_FOUND"
+	ErrCodeDependencyFailed = "DEPENDENCY_FAILED"
+	ErrCodeDatasourceFailed = "DATASOURCE_FAILED"
+	ErrCodeInvalidParams    = "INVALID_PARAMS"
+	ErrCodeValidationFailed = "VALIDATION_FAILED"
+	ErrCodeUnknown          = "UNKNOWN"
 )
 
 var (
-	ErrorNotFound         = errors.New(ErrorCodeNotFound)
-	ErrorDependencyFailed = errors.New(ErrorCodeDependencyFailed)
-	ErrorInvalidParams    = errors.New(ErrorCodeInvalidParams)
-	ErrorValidationFailed = errors.New(ErrorCodeValidationFailed)
-	ErrorUnknown          = errors.New(ErrorCodeUnknown)
+	ErrNotFound         = errors.New(ErrCodeNotFound)
+	ErrDependencyFailed = errors.New(ErrCodeDependencyFailed)
+	ErrDatasourceFailed = errors.New(ErrCodeDatasourceFailed)
+	ErrInvalidParams    = errors.New(ErrCodeInvalidParams)
+	ErrValidationFailed = errors.New(ErrCodeValidationFailed)
+	ErrUnknown          = errors.New(ErrCodeUnknown)
 )
