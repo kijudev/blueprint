@@ -3,19 +3,20 @@ package auth
 import (
 	"context"
 
-	"github.com/kijudev/blueprint/lib/models"
-	"github.com/kijudev/blueprint/lib/modules"
+	"github.com/kijudev/blueprint/lib"
 )
 
 type Module interface {
-	modules.Module
+	lib.Module
 
-	CoreSerive() CoreSerive
+	DataService() DataService
 }
 
-type CoreSerive interface {
+type DataService interface {
 	CreateUser(ctx context.Context, params UserParams) (*User, error)
-	GetUserByID(ctx context.Context, id models.ID) (*User, error)
-	DeleteUser(ctx context.Context, id models.ID) (*User, error)
-	UpdateUser(ctx context.Context, id models.ID, params UserParams) (*User, error)
+	GetUserByID(ctx context.Context, id lib.ID) (*User, error)
+	DeleteUser(ctx context.Context, id lib.ID) (*User, error)
+	UpdateUser(ctx context.Context, id lib.ID, params UserParams) (*User, error)
+	RemoveUserPermissions(ctx context.Context, id lib.ID, permissions Permissions) (*User, error)
+	AddUserPermissions(ctx context.Context, id lib.ID, permissions Permissions) (*User, error)
 }

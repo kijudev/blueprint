@@ -2,10 +2,10 @@ package authpg
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
-	"github.com/kijudev/blueprint/lib/modules"
-	"github.com/kijudev/blueprint/modules/dbpg"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kijudev/blueprint/lib"
 )
 
 type Module struct {
@@ -13,15 +13,15 @@ type Module struct {
 	status string
 
 	deps     ModuleDeps
-	services ModuleSerivces
+	services ModuleServices
 }
 
 type ModuleDeps struct {
-	DB *dbpg.DBService
+	DB *pgxpool.Pool
 }
 
-type ModuleSerivces struct {
-	Core *CoreService
+type ModuleServices struct {
+	data *DataService
 }
 
 const Tag = "AUTHPG"
@@ -29,11 +29,13 @@ const Tag = "AUTHPG"
 func New(deps ModuleDeps) *Module {
 	return &Module{
 		tag:    Tag,
-		status: modules.StatusCodePreInit,
-		deps:   deps,
+		status: lib.StatusCodeModuleNotInitialized,
 
-		services: ModuleSerivces{
-			Core: NewCoreService(deps.DB),
+		deps: deps,
+		services: ModuleServices{
+			data: &DataService{
+				db: deps.DB,
+			},
 		},
 	}
 }
@@ -47,17 +49,17 @@ func (m *Module) Status() string {
 }
 
 func (m *Module) Init(ctx context.Context) error {
-	if m.status == modules.StatusCodeActive {
-		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrInvalidStatus)
+	e := errors.New("(authpg.Model.Init)")
+
+	if m.status == lib.StatusCodeModuleRunning {
+		return lib.JoinErrors(e, lib.ErrModuleAlreadyRunning)
 	}
 
 	if m.deps.DB == nil {
-		return fmt.Errorf("(authpg.Module.Init) %w", modules.ErrMissingDependency)
+		return lib.JoinErrors(e, lib.ErrMissingDependency)
 	}
 
-	m.services.Core.db = m.deps.DB
-
-	m.status = modules.StatusCodeActive
+	m.status = lib.StatusCodeModuleRunning
 
 	return nil
 }
@@ -69,11 +71,17 @@ func (m *Module) MustInit(ctx context.Context) {
 }
 
 func (m *Module) Stop(ctx context.Context) error {
-	if m.status != modules.StatusCodeActive {
-		return fmt.Errorf("(authpg.Module.Stop) %w", modules.ErrInvalidStatus)
+	e := errors.New("(authpg.Model.Stop)")
+
+	if m.status == lib.StatusCodeModuleNotInitialized {
+		return lib.JoinErrors(e, lib.ErrModuleNotInitialized)
 	}
 
-	m.status = modules.StatusCodeStopped
+	if m.status == lib.StatusCodeModuleStopped {
+		return lib.JoinErrors(e, lib.ErrModuleStopFailed)
+	}
+
+	m.status = lib.StatusCodeModuleStopped
 
 	return nil
 }
@@ -84,10 +92,10 @@ func (m *Module) MustStop(ctx context.Context) {
 	}
 }
 
-func (m *Module) CoreService() *CoreService {
-	if m.status != modules.StatusCodeActive {
-		panic(fmt.Errorf("(authpg.Module.CoreService) %w", modules.ErrInvalidStatus))
+func (m *Module) DataService() *DataService {
+	if m.services.data == nil {
+		panic(errors.New("(authpg.Model.DataService)"))
 	}
 
-	return m.services.Core
+	return m.services.data
 }

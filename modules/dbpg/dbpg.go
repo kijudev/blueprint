@@ -2,44 +2,35 @@ package dbpg
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kijudev/blueprint/lib/modules"
+	"github.com/kijudev/blueprint/lib"
 )
 
 type Module struct {
 	tag    string
 	status string
 
-	connStr string
-
-	deps     ModuleDeps
+	config   ModuleConfig
 	services ModulesServices
 }
 
-type ModuleDeps struct{}
-type ModulesServices struct {
-	DB *DBService
+type ModuleConfig struct {
+	ConnStr string
 }
 
-type DBService struct {
-	*pgxpool.Pool
+type ModulesServices struct {
+	db *pgxpool.Pool
 }
 
 const Tag = "POSTGRES"
 
-func New(connStr string) *Module {
+func New(config ModuleConfig) *Module {
 	return &Module{
-		tag:    Tag,
-		status: modules.StatusCodePreInit,
-
-		connStr: connStr,
-
-		deps: ModuleDeps{},
-		services: ModulesServices{
-			DB: &DBService{},
-		},
+		tag:      Tag,
+		status:   lib.StatusCodeModuleNotInitialized,
+		config:   config,
+		services: ModulesServices{},
 	}
 }
 
@@ -52,17 +43,17 @@ func (m *Module) Status() string {
 }
 
 func (m *Module) Init(ctx context.Context) error {
-	if m.status == modules.StatusCodeActive {
-		return fmt.Errorf("(pgdb.Module.Init) %w", modules.ErrInvalidStatus)
+	if m.status == lib.StatusCodeModuleRunning {
+		return lib.ErrModuleAlreadyRunning
 	}
 
-	pool, err := pgxpool.New(ctx, m.connStr)
+	pool, err := pgxpool.New(ctx, m.config.ConnStr)
 	if err != nil {
-		return fmt.Errorf("(dbpg.Module.Init) %w; %w", modules.ErrInitFailed, err)
+		return lib.JoinErrors(lib.ErrModuleInitFailed, err)
 	}
 
-	m.services.DB.Pool = pool
-	m.status = modules.StatusCodeActive
+	m.services.db = pool
+	m.status = lib.StatusCodeModuleRunning
 
 	return nil
 }
@@ -74,12 +65,12 @@ func (m *Module) MustInit(ctx context.Context) {
 }
 
 func (m *Module) Stop(ctx context.Context) error {
-	if m.status != modules.StatusCodeActive {
-		return fmt.Errorf("(dbpg.Module.Stop) %w", modules.ErrInvalidStatus)
+	if m.status != lib.StatusCodeModuleRunning {
+		return lib.JoinErrors(lib.ErrModuleStopFailed)
 	}
 
-	m.services.DB.Close()
-	m.status = modules.StatusCodeStopped
+	m.services.db.Close()
+	m.status = lib.StatusCodeModuleStopped
 
 	return nil
 }
@@ -90,10 +81,10 @@ func (m *Module) MustStop(ctx context.Context) {
 	}
 }
 
-func (m *Module) DBService() *DBService {
-	if m.status != modules.StatusCodeActive {
-		panic(fmt.Errorf("(dbpg.Module.DBService) %w", modules.ErrInvalidStatus))
+func (m *Module) DBService() *pgxpool.Pool {
+	if m.status != lib.StatusCodeModuleRunning {
+		panic(lib.JoinErrors(lib.ErrUnknown))
 	}
 
-	return m.services.DB
+	return m.services.db
 }

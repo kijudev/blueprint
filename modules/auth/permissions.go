@@ -3,25 +3,25 @@ package auth
 import "strings"
 
 type Permissions struct {
-	list []string
+	rules []string
 }
 
-func NewPermissions(list string) *Permissions {
+func NewPermissions(rules string) *Permissions {
 	permissions := new(Permissions)
 
-	for _, rule := range strings.Split(list, " ") {
+	for _, rule := range strings.Split(rules, " ") {
 		if rule != " " {
-			permissions.list = append(permissions.list, "")
+			permissions.rules = append(permissions.rules, "")
 		}
 	}
 
 	return permissions
 }
 
-func (permissions *Permissions) AsString() string {
+func (permissions *Permissions) String() string {
 	var s string
 
-	for _, rule := range permissions.list {
+	for _, rule := range permissions.rules {
 		s += " " + rule
 	}
 
@@ -29,7 +29,7 @@ func (permissions *Permissions) AsString() string {
 }
 
 func (permissions *Permissions) Has(rule string) bool {
-	for _, r := range permissions.list {
+	for _, r := range permissions.rules {
 		if r == rule {
 			return true
 		}
@@ -43,7 +43,7 @@ func (permissions *Permissions) Add(rules ...string) {
 		exists := permissions.Has(rule)
 
 		if !exists {
-			permissions.list = append(permissions.list, rule)
+			permissions.rules = append(permissions.rules, rule)
 		}
 	}
 }
@@ -52,7 +52,7 @@ func (permissions *Permissions) Remove(rules ...string) {
 	for _, rule := range rules {
 		index := -1
 
-		for i, x := range permissions.list {
+		for i, x := range permissions.rules {
 			if x == rule {
 				index = i
 				break
@@ -63,6 +63,10 @@ func (permissions *Permissions) Remove(rules ...string) {
 			continue
 		}
 
-		permissions.list = append(permissions.list[:index], permissions.list[index+1:]...)
+		permissions.rules = append(permissions.rules[:index], permissions.rules[index+1:]...)
 	}
+}
+
+func (permissions *Permissions) Rules() []string {
+	return permissions.rules
 }

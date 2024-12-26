@@ -3,12 +3,11 @@ package auth
 import (
 	"time"
 
-	"github.com/kijudev/blueprint/lib/models"
-	"github.com/kijudev/blueprint/lib/validation"
+	"github.com/kijudev/blueprint/lib"
 )
 
 type User struct {
-	ID          models.ID
+	ID          lib.ID
 	Email       string
 	Name        string
 	Permissions Permissions
@@ -38,16 +37,16 @@ type UserParamsData struct {
 }
 
 type UserFilter struct {
-	ID    *models.ID
-	Email *string
-	Name  *string
+	EqID    *lib.ID
+	EqEmail *string
+	EqName  *string
 }
 
 func NewUser(params UserParams) *User {
 	now := time.Now()
 
 	return &User{
-		ID:          models.GenerateID(),
+		ID:          lib.GenerateID(),
 		Email:       params.Email,
 		Name:        params.Name,
 		Permissions: params.Permissions,
@@ -58,21 +57,21 @@ func NewUser(params UserParams) *User {
 
 func (u *User) Data() *UserData {
 	return &UserData{
-		ID:          u.ID.String(),
+		ID:          u.ID.UUID().String(),
 		Email:       u.Email,
 		Name:        u.Name,
-		Permissions: u.Permissions.AsString(),
+		Permissions: u.Permissions.String(),
 		CreatedAt:   u.CreatedAt.Unix(),
 		UpdatedAt:   u.UpdatedAt.Unix(),
 	}
 }
 
 func (u *User) Validate() error {
-	c := validation.NewCollection()
+	c := lib.NewValCollection()
 
-	c.Add("email", validation.String(u.Email).Email())
-	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
-	c.Add("name", validation.String(u.Name).NotEmpty().MaxLength(255))
+	c.Add("email", lib.ValString(u.Email).Email())
+	c.Add("name", lib.ValString(u.Name).NotEmpty().MaxLength(255))
+	c.Add("name", lib.ValString(u.Name).NotEmpty().MaxLength(255))
 
 	return c.Resolve()
 }

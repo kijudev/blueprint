@@ -1,4 +1,4 @@
-package models
+package lib
 
 import (
 	"github.com/google/uuid"
@@ -11,7 +11,7 @@ func GenerateID() ID {
 	return ID(uuid.New())
 }
 
-func MustNew(s string) ID {
+func MustNewID(s string) ID {
 	return ID(uuid.MustParse(s))
 }
 
@@ -21,4 +21,9 @@ func (id ID) String() string {
 
 func (id ID) UUID() uuid.UUID {
 	return uuid.UUID(id)
+}
+
+type Pagination struct {
+	Offset int
+	Limit  int
 }
