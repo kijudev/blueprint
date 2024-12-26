@@ -24,7 +24,8 @@ func main() {
 	authModule.MustInit(ctx)
 	defer authModule.MustStop(ctx)
 
-	user, err := authModule.DataService().GetAccountByID(ctx, lib.MustNewID("0193f7da-6cd3-fb6e-f33a-5f7b4f8f8103"))
+	//user, err := authModule.DataService().GetAccountByID(ctx, lib.MustNewID("0193f7da-6cd3-fb6e-f33a-5f7b4f8f8103"))
+	user, err := authModule.DataService().GetAccounts(ctx, lib.Pagination{Offset: 0, Limit: 10})
 
 	if err != nil {
 		panic(err)

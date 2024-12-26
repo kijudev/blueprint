@@ -73,6 +73,32 @@ func (s *DataService) GetUserByID(ctx context.Context, id lib.ID) (*auth.User, e
 	return &users[0], nil
 }
 
+func (s *DataService) GetUsers(ctx context.Context, pagination lib.Pagination) ([]auth.User, error) {
+	e := errors.New("(authpg.DataService.GetUsers)")
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			fmt.Println("TX Rollback: ", err)
+		}
+	}()
+
+	users, err := s.findUsers(ctx, tx, auth.UserFilter{}, pagination)
+	if err != nil {
+		return nil, lib.JoinErrors(e, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	return users, nil
+}
+
 func (s *DataService) DeleteUser(ctx context.Context, id lib.ID) (*auth.User, error) {
 	e := errors.New("(authpg.DataService.DeleteUser)")
 
@@ -408,6 +434,32 @@ func (s *DataService) GetSessionByUserID(ctx context.Context, userID lib.ID) (*a
 	return &sessions[0], nil
 }
 
+func (s *DataService) GetSessions(ctx context.Context, pagination lib.Pagination) ([]auth.Session, error) {
+	e := errors.New("(authpg.DataService.GetSessions)")
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			fmt.Println("TX Rollback: ", err)
+		}
+	}()
+
+	sessions, err := s.findSessions(ctx, tx, auth.SessionFilter{}, pagination)
+	if err != nil {
+		return nil, lib.JoinErrors(e, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	return sessions, nil
+}
+
 func (s *DataService) DeleteSession(ctx context.Context, id lib.ID) (*auth.Session, error) {
 	e := errors.New("(authpg.DataService.DeleteSession)")
 
@@ -470,8 +522,9 @@ func (s *DataService) RefreshSession(ctx context.Context, id lib.ID, duration ti
 	}
 
 	session := &sessions[0]
-	session.ExpiresAt = time.Now().UTC().Add(duration)
-	session.UpdatedAt = time.Now().UTC()
+	now := time.Now().UTC()
+	session.ExpiresAt = now.Add(duration)
+	session.UpdatedAt = now.UTC()
 
 	query := `
 		UPDATE
@@ -589,6 +642,32 @@ func (s *DataService) GetAccountByID(ctx context.Context, id lib.ID) (*auth.Acco
 	}
 
 	return &accounts[0], nil
+}
+
+func (s *DataService) GetAccounts(ctx context.Context, pagination lib.Pagination) ([]auth.Account, error) {
+	e := errors.New("(authpg.DataService.GetAccounts)")
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			fmt.Println("TX Rollback: ", err)
+		}
+	}()
+
+	accounts, err := s.findAccounts(ctx, tx, auth.AccountFilter{}, pagination)
+	if err != nil {
+		return nil, lib.JoinErrors(e, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	return accounts, nil
 }
 
 func (s *DataService) findAccounts(ctx context.Context, tx pgx.Tx, filter auth.AccountFilter, pagination lib.Pagination) ([]auth.Account, error) {
