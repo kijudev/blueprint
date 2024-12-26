@@ -560,3 +560,103 @@ func (s *DataService) findSessions(ctx context.Context, tx pgx.Tx, filter auth.S
 
 	return sessions, nil
 }
+
+func (s *DataService) GetAccountByID(ctx context.Context, id lib.ID) (*auth.Account, error) {
+	e := errors.New("(authpg.DataService.GetAccountByID)")
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			fmt.Println("TX Rollback: ", err)
+		}
+	}()
+
+	accounts, err := s.findAccounts(ctx, tx, auth.AccountFilter{EqID: &id}, lib.Pagination{})
+	if err != nil {
+		return nil, lib.JoinErrors(e, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+
+	if len(accounts) == 0 {
+		return nil, lib.JoinErrors(e, lib.ErrNotFound)
+	}
+
+	return &accounts[0], nil
+}
+
+func (s *DataService) findAccounts(ctx context.Context, tx pgx.Tx, filter auth.AccountFilter, pagination lib.Pagination) ([]auth.Account, error) {
+	e := errors.New("(authpg.DataService.findAccounts)")
+
+	query := `
+		SELECT
+    		users.id, users.email, users.name, users.permissions, users.created_at, users.updated_at,
+      		sessions.id, sessions.user_id, sessions.expires_at, sessions.created_at, sessions.updated_at
+       	FROM
+        	users
+        INNER JOIN sessions ON
+        	users.id = sessions.user_id
+        WHERE
+        	1 = 1
+	`
+
+	args := pgx.NamedArgs{}
+
+	if filter.EqID != nil {
+		query += " AND users.id = @id"
+		args["id"] = filter.EqID.UUID()
+	}
+
+	if pagination.Limit > 0 {
+		query += " LIMIT @limit"
+		args["limit"] = pagination.Limit
+	}
+
+	if pagination.Offset > 0 {
+		query += " OFFSET @offset"
+		args["offset"] = pagination.Offset
+	}
+
+	rows, err := tx.Query(ctx, query, args)
+	if err != nil {
+		return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+	}
+	defer rows.Close()
+
+	accounts := []auth.Account{}
+	for rows.Next() {
+		account := auth.Account{}
+		var permissions string
+
+		err := rows.Scan(
+			&account.User.ID,
+			&account.User.Email,
+			&account.User.Name,
+			&permissions,
+			&account.User.CreatedAt,
+			&account.User.UpdatedAt,
+			&account.Auth.Session.ID,
+			&account.Auth.Session.UserID,
+			&account.Auth.Session.ExpiresAt,
+			&account.Auth.Session.CreatedAt,
+			&account.Auth.Session.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, lib.JoinErrors(e, lib.ErrDatasourceFailed, err)
+		}
+
+		account.User.Permissions = *auth.NewPermissions(permissions)
+		account.ID = account.User.ID
+
+		accounts = append(accounts, account)
+	}
+
+	return accounts, nil
+}

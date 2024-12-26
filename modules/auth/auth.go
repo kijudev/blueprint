@@ -26,4 +26,6 @@ type DataService interface {
 	GetSessionByUserID(ctx context.Context, id lib.ID) (*Session, error)
 	DeleteSession(ctx context.Context, id lib.ID) (*Session, error)
 	RefreshSession(ctx context.Context, id lib.ID, duration time.Duration) (*Session, error)
+
+	GetAccountByID(ctx context.Context, id lib.ID) (*Account, error)
 }
