@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"github.com/kijudev/blueprint/lib"
 )
@@ -19,4 +20,10 @@ type DataService interface {
 	UpdateUser(ctx context.Context, id lib.ID, params UserParams) (*User, error)
 	RemoveUserPermissions(ctx context.Context, id lib.ID, permissions Permissions) (*User, error)
 	AddUserPermissions(ctx context.Context, id lib.ID, permissions Permissions) (*User, error)
+
+	CreateSession(ctx context.Context, params SessionParams, duration time.Duration) (*Session, error)
+	GetSessionByID(ctx context.Context, id lib.ID) (*Session, error)
+	GetSessionByUserID(ctx context.Context, id lib.ID) (*Session, error)
+	DeleteSession(ctx context.Context, id lib.ID) (*Session, error)
+	RefreshSession(ctx context.Context, id lib.ID, duration time.Duration) (*Session, error)
 }

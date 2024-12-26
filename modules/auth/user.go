@@ -20,8 +20,8 @@ type UserData struct {
 	Email       string `json:"email"`
 	Name        string `json:"name"`
 	Permissions string `json:"permissions"`
-	CreatedAt   int64  `json:"createdAt"`
-	UpdatedAt   int64  `json:"updatedAt"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 type UserParams struct {
@@ -43,7 +43,7 @@ type UserFilter struct {
 }
 
 func NewUser(params UserParams) *User {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	return &User{
 		ID:          lib.GenerateID(),
@@ -61,8 +61,8 @@ func (u *User) Data() *UserData {
 		Email:       u.Email,
 		Name:        u.Name,
 		Permissions: u.Permissions.String(),
-		CreatedAt:   u.CreatedAt.Unix(),
-		UpdatedAt:   u.UpdatedAt.Unix(),
+		CreatedAt:   u.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   u.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
