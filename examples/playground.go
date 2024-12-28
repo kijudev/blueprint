@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/kijudev/blueprint/signals"
+	"github.com/kijudev/blueprint/modules/evbus"
 )
 
 func main() {
@@ -31,16 +30,12 @@ func main() {
 	// 	fmt.Println(user)
 	// }
 
-	s := signals.New[int]()
-
-	s.Listen(func(ctx context.Context, e signals.Event[int]) {
-		fmt.Println("1 ", e.Data)
-	})
-	s.Listen(func(ctx context.Context, e signals.Event[int]) {
-		fmt.Println("2 ", e.Data)
+	ctx := context.Background()
+	bus := evbus.New(evbus.ModuleConfig{
+		MaxGoroutines: 10,
 	})
 
-	s.Dispatch(42)
-	s.Dispatch(43)
-	s.Dispatch(44)
+	bus.MustInit(ctx)
+	defer bus.MustStop(ctx)
+
 }
