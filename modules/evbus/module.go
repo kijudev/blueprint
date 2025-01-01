@@ -2,6 +2,7 @@ package evbus
 
 import (
 	"context"
+	"errors"
 
 	"github.com/kijudev/blueprint/lib"
 )
@@ -15,7 +16,7 @@ type Module struct {
 }
 
 type ModuleConfig struct {
-	MaxGoroutines int
+	MaxGoroutines uint
 }
 
 type ModuleServices struct {
@@ -49,8 +50,8 @@ func (m *Module) Init(ctx context.Context) error {
 		return lib.ErrModuleAlreadyRunning
 	}
 
-	if m.config.MaxGoroutines == 0 {
-		return lib.ErrModuleInitFailed
+	if m.config.MaxGoroutines <= 0 {
+		return lib.JoinErrors(lib.ErrModuleInitFailed, errors.New("Number of goroutines cannot be smaller than 1"))
 	}
 
 	m.status = lib.StatusCodeModuleRunning
@@ -69,6 +70,7 @@ func (m *Module) Stop(ctx context.Context) error {
 		return lib.ErrModuleStopFailed
 	}
 
+	m.services.EventBusService.Wait(ctx)
 	m.status = lib.StatusCodeModuleStopped
 
 	return nil

@@ -2,8 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kijudev/blueprint/modules/evbus"
+)
+
+const (
+	EvCodeOne = "one"
+	EvCodeTwo = "two"
 )
 
 func main() {
@@ -28,6 +34,7 @@ func main() {
 	// 	panic(err)
 	// } else {
 	// 	fmt.Println(user)
+
 	// }
 
 	ctx := context.Background()
@@ -35,7 +42,39 @@ func main() {
 		MaxGoroutines: 10,
 	})
 
+	bus.Service().MustRegister(ctx, EvCodeOne, new(OneEvent))
+	bus.Service().MustRegister(ctx, EvCodeTwo, new(TwoEvent))
+
+	//fmt.Println(bus.Service().IsRegistered(ctx, EvCodeOne))
+	//fmt.Println(bus.Service().IsRegistered(ctx, EvCodeTwo))
+
+	bus.Service().MustSubscribe(ctx, EvCodeOne, func(ctx context.Context, ev OneEvent) {
+		fmt.Println("S1 => ", ev.Value)
+	})
+
+	bus.Service().MustSubscribe(ctx, EvCodeTwo, func(ctx context.Context, ev TwoEvent) {
+		fmt.Println("S1 => ", ev.Value)
+	})
+
+	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{1})
+	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{2})
+	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{3})
+	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{4})
+
+	bus.Service().Wait(ctx)
+
+	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"blue"})
+	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"green"})
+	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"yellow"})
+
 	bus.MustInit(ctx)
 	defer bus.MustStop(ctx)
 
+}
+
+type OneEvent struct {
+	Value int
+}
+type TwoEvent struct {
+	Value string
 }
