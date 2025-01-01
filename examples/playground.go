@@ -7,11 +7,6 @@ import (
 	"github.com/kijudev/blueprint/modules/evbus"
 )
 
-const (
-	EvCodeOne = "one"
-	EvCodeTwo = "two"
-)
-
 func main() {
 	// ctx := context.Background()
 
@@ -42,30 +37,30 @@ func main() {
 		MaxGoroutines: 10,
 	})
 
-	bus.Service().MustRegister(ctx, EvCodeOne, new(OneEvent))
-	bus.Service().MustRegister(ctx, EvCodeTwo, new(TwoEvent))
+	bus.Service().MustRegister(ctx, new(OneEvent))
+	bus.Service().MustRegister(ctx, new(TwoEvent))
 
 	//fmt.Println(bus.Service().IsRegistered(ctx, EvCodeOne))
 	//fmt.Println(bus.Service().IsRegistered(ctx, EvCodeTwo))
 
-	bus.Service().MustSubscribe(ctx, EvCodeOne, func(ctx context.Context, ev OneEvent) {
-		fmt.Println("S1 => ", ev.Value)
+	bus.Service().MustSubscribe(ctx, func(ctx context.Context, ev OneEvent) {
+		fmt.Println("S1 (E1) => ", ev.Value)
 	})
 
-	bus.Service().MustSubscribe(ctx, EvCodeTwo, func(ctx context.Context, ev TwoEvent) {
-		fmt.Println("S1 => ", ev.Value)
+	bus.Service().MustSubscribe(ctx, func(ctx context.Context, ev TwoEvent) {
+		fmt.Println("S1 (E2) => ", ev.Value)
 	})
 
-	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{1})
-	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{2})
-	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{3})
-	bus.Service().MustDispatch(ctx, EvCodeOne, OneEvent{4})
+	bus.Service().MustDispatchSync(ctx, OneEvent{1})
+	bus.Service().MustDispatchSync(ctx, OneEvent{2})
+	bus.Service().MustDispatch(ctx, OneEvent{3})
+	bus.Service().MustDispatch(ctx, OneEvent{4})
+
+	bus.Service().MustDispatch(ctx, TwoEvent{"A"})
+	bus.Service().MustDispatch(ctx, TwoEvent{"B"})
+	bus.Service().MustDispatch(ctx, TwoEvent{"C"})
 
 	bus.Service().Wait(ctx)
-
-	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"blue"})
-	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"green"})
-	bus.Service().MustDispatch(ctx, EvCodeTwo, TwoEvent{"yellow"})
 
 	bus.MustInit(ctx)
 	defer bus.MustStop(ctx)
@@ -77,4 +72,8 @@ type OneEvent struct {
 }
 type TwoEvent struct {
 	Value string
+}
+
+type ThreeEvent struct {
+	Value float64
 }

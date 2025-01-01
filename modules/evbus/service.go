@@ -14,8 +14,8 @@ type Event interface{}
 type Service struct {
 	maxGoroutines uint
 
-	registry map[string]reflect.Type
-	handlers map[string][]reflect.Value
+	registry map[reflect.Type]struct{}
+	handlers map[reflect.Type][]reflect.Value
 
 	wg   sync.WaitGroup
 	lock sync.Mutex
@@ -24,20 +24,16 @@ type Service struct {
 func NewEventBusService(maxGoroutines uint) *Service {
 	return &Service{
 		maxGoroutines: maxGoroutines,
-		registry:      make(map[string]reflect.Type),
-		handlers:      make(map[string][]reflect.Value),
+		registry:      make(map[reflect.Type]struct{}),
+		handlers:      make(map[reflect.Type][]reflect.Value),
 	}
 }
 
-func (s *Service) Register(ctx context.Context, evCode string, ev Event) error {
+func (s *Service) Register(ctx context.Context, ev Event) error {
 	e := errors.New("evbus.Module.Service.Register")
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
-
-	if _, ok := s.registry[evCode]; ok {
-		return lib.JoinErrors(e, errors.New("Event code already registered"))
-	}
 
 	evType := reflect.TypeOf(ev)
 
@@ -45,34 +41,43 @@ func (s *Service) Register(ctx context.Context, evCode string, ev Event) error {
 		evType = evType.Elem()
 	}
 
-	s.registry[evCode] = evType
+	if _, ok := s.registry[evType]; ok {
+		return lib.JoinErrors(e, errors.New("Event already registered"))
+	}
+
+	s.registry[evType] = struct{}{}
 
 	return nil
 }
 
-func (s *Service) MustRegister(ctx context.Context, evCode string, ev Event) {
-	if err := s.Register(ctx, evCode, ev); err != nil {
+func (s *Service) MustRegister(ctx context.Context, ev Event) {
+	if err := s.Register(ctx, ev); err != nil {
 		panic(err)
 	}
 }
 
-func (s *Service) IsRegistered(ctx context.Context, evCode string) bool {
-	if _, ok := s.registry[evCode]; ok {
+func (s *Service) IsRegistered(ctx context.Context, ev Event) bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	evType := reflect.TypeOf(ev)
+
+	if evType.Kind() == reflect.Ptr {
+		evType = evType.Elem()
+	}
+
+	if _, ok := s.registry[evType]; ok {
 		return true
 	}
 
 	return false
 }
 
-func (s *Service) Subscribe(ctx context.Context, evCode string, handler any) error {
+func (s *Service) Subscribe(ctx context.Context, handler any) error {
 	e := errors.New("evbus.Module.Service.Subscribe")
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
-
-	if _, ok := s.registry[evCode]; !ok {
-		return lib.JoinErrors(e, errors.New("Event code not registered"))
-	}
 
 	handlerType := reflect.TypeOf(handler)
 	handlerValue := reflect.ValueOf(handler)
@@ -82,61 +87,61 @@ func (s *Service) Subscribe(ctx context.Context, evCode string, handler any) err
 	}
 
 	numArgs := handlerType.NumIn()
+
 	if numArgs != 2 {
 		return lib.JoinErrors(e, errors.New("Handler must have two arguments: ctx, event"))
 	}
 
-	if !handlerType.In(0).Implements(reflect.TypeOf((*context.Context)(nil)).Elem()) {
+	handlerCtxType := handlerType.In(0)
+	handlerEvType := handlerType.In(1)
+
+	if !handlerCtxType.Implements(reflect.TypeOf((*context.Context)(nil)).Elem()) {
 		return lib.JoinErrors(e, errors.New("The first handler argument in not context.Context"))
 	}
 
-	if handlerType.In(1).Kind() == reflect.Ptr {
+	if handlerEvType.Kind() == reflect.Ptr {
 		return lib.JoinErrors(e, errors.New("Handle must not accept events passed by pointers"))
 	}
 
-	if handlerType.In(1) != s.registry[evCode] {
-		return lib.JoinErrors(e, errors.New("Event type mismatch"))
+	if _, ok := s.registry[handlerEvType]; !ok {
+		return lib.JoinErrors(e, errors.New("Event not registered"))
 	}
 
-	s.handlers[evCode] = append(s.handlers[evCode], handlerValue)
+	s.handlers[handlerEvType] = append(s.handlers[handlerEvType], handlerValue)
 
 	return nil
 }
 
-func (s *Service) MustSubscribe(ctx context.Context, evCode string, handler any) {
-	if err := s.Subscribe(ctx, evCode, handler); err != nil {
+func (s *Service) MustSubscribe(ctx context.Context, handler any) {
+	if err := s.Subscribe(ctx, handler); err != nil {
 		panic(err)
 	}
 }
 
-func (s *Service) Dispatch(ctx context.Context, evCode string, ev Event) error {
+func (s *Service) Dispatch(ctx context.Context, ev Event) error {
 	e := errors.New("evbus.Module.Service.Dispatch")
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if _, ok := s.registry[evCode]; !ok {
-		return lib.JoinErrors(e, errors.New("Event code not registered"))
-	}
-
 	evType := reflect.TypeOf(ev)
 	evValue := reflect.ValueOf(ev)
 
-	if evType.Kind() == reflect.Pointer && evValue.IsNil() {
+	if evType.Kind() == reflect.Ptr && evValue.IsNil() {
 		return lib.JoinErrors(e, errors.New("Event cannot be null"))
 	}
 
-	if evType.Kind() == reflect.Pointer {
+	if evType.Kind() == reflect.Ptr {
 		evType = evType.Elem()
 		evValue = evValue.Elem()
 	}
 
-	if t, _ := s.registry[evCode]; evType != t {
-		return lib.JoinErrors(e, errors.New("Event type mismatch"))
+	if _, ok := s.registry[evType]; !ok {
+		return lib.JoinErrors(e, errors.New("Event not registered"))
 	}
 
 	// handlers are insured to be valid
-	handlers := s.handlers[evCode]
+	handlers := s.handlers[evType]
 	guard := make(chan struct{}, s.maxGoroutines)
 	ctxValue := reflect.ValueOf(ctx)
 
@@ -158,8 +163,28 @@ func (s *Service) Dispatch(ctx context.Context, evCode string, ev Event) error {
 	return nil
 }
 
-func (s *Service) MustDispatch(ctx context.Context, evCode string, ev any) {
-	if err := s.Dispatch(ctx, evCode, ev); err != nil {
+func (s *Service) MustDispatch(ctx context.Context, ev Event) {
+	if err := s.Dispatch(ctx, ev); err != nil {
+		panic(err)
+	}
+}
+
+func (s *Service) DispatchSync(ctx context.Context, ev Event) error {
+	s.Wait(ctx)
+
+	e := errors.New("evbus.Module.Service.DispatchSync")
+	err := s.Dispatch(ctx, ev)
+
+	if err != nil {
+		return lib.JoinErrors(e, err)
+	}
+
+	s.Wait(ctx)
+	return nil
+}
+
+func (s *Service) MustDispatchSync(ctx context.Context, ev Event) {
+	if err := s.DispatchSync(ctx, ev); err != nil {
 		panic(err)
 	}
 }
